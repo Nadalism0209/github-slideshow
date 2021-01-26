@@ -1,0 +1,100 @@
+#1. 말뭉치의 구성
+library('tm')
+#파일 위치 설정 
+my.text.location<-"C:/RStudio/텍스트 마이닝/박길성 교수님 논문초록 모음" 
+#모아놓은 텍스트 데이터들을 말뭉치로 구성하기 
+mypaper <- VCorpus(DirSource(my.text.location))
+
+mypaper # 메타데이터에 대한 정보 확인 가능 
+
+summary(mypaper)  #리스트 형식으로 구성된 tm 패키지 
+
+#말뭉치를 구성하는 특정 문서 지정하기
+mypaper[[2]]   #말뭉치의 두 번째 문서 
+mypaper[[2]]$content  #두번째 문서의 내용 확인하기 
+mypaper[[2]]$meta
+
+#메타데이터 입력 
+meta(mypaper[[2]],tag='author')<-"G.S.Park"
+meta(mypaper[[2]])
+#meta(mypaper, tag='author') <- "G.S.Park"   이건 왜 작동하지 않는가? 
+
+#말뭉치 사전처리
+#특수문자 전후에 등장하는 단어들 살펴보기 
+library(stringr)
+myfunc <- function(x){
+    str_extract_all(x$content,
+                    "[[:alnum:]]{1,}[[:punct:]]{1}?[[:alnum:]]{1,}")}
+mypuncts <- lapply(mypaper,myfunc)
+table(unlist(mypuncts))
+
+#숫자표현 파악하기 
+myfunc <- function(x){
+    str_extract_all(x$content, "[[:graph:]]{0,}[[:digit:]]{1,}[[:graph:]]{0,}")
+}
+mydigits <- lapply(mypaper,myfunc)
+table(unlist(mydigits))
+
+#대문자로 시작하는 단어 확인하기 (고유명사 확인)
+myfunc<-function(x){
+    str_extract_all(x$content,
+                    "[[:upper:]]{1}[[:alnum:]]{1,}")
+}
+myuppers<-lapply(mypaper,myfunc)
+table(unlist(myuppers))
+
+#모든 대문자 표현 소문자 통합 가능 
+
+#말뭉치 텍스트 데이터 처리과정 계획 
+#1. 숫자표현 모두 제거하기 
+#2. 특수문자 모두 제거하기 
+#3. 2번 연이어 나타난 공란 하나의 스페이스 공란으로 바꾸기 
+#4. 대문자 모두를 소문자로 전환하기 
+#5.  "e\u0080" 제거하기 
+
+#1.숫자표현 모두 제거하기
+mycorpus<-tm_map(mypaper,removeNumbers)
+#2.특수문자 모두 제거하기
+mycorpus<-tm_map(mycorpus, removePunctuation)
+#3.공란처리하기 
+mycorpus <- tm_map(mycorpus, stripWhitespace)
+#4.모든 대문자를 소문자로 변환하기 
+mycorpus <- tm_map(mycorpus, content_transformer(tolower))
+#5."e\u0080" 표현 제거하기 
+myfunc<-function(x){str_replace_all(x$content,'e\u0080','')}
+mycorpus<-lapply(mycorpus,myfunc)
+
+
+#사전처리 작업 이전의 mypaper말뭉치와 사전 처리 작업 후의 mycorpus 말뭉치 비교
+#1. 문자 수와 단어 수 계산 위한 맞춤형 함수 설정 
+mycharfunc <- function(x){str_extract_all(x$content,".")}
+mywordfunc <- function(x){str_extract_all(x$content,boundary("word"))}
+
+#2. 사전처리작업 이전의 말뭉치 
+mychar <- lapply(mypaper,mycharfunc)
+myuniquechar0<-length(table(unlist(mychar)))
+mytotalchar0<-sum(table(unlist(mychar)))
+
+myword<-lapply(mypaper,mywordfunc)
+myuniqueword0<-length(table(unlist(myword)))
+mytotalword0<-sum(table(unlist(myword)))
+
+#3. 사전처리 과정 적용 이후 
+mychar <- lapply(mycorpus,mycharfunc)
+myuniquechar1<-length(table(unlist(mychar)))
+mytotalchar1<-sum(table(unlist(mychar)))
+
+myword<-lapply(mycorpus,mywordfunc)
+myuniqueword1<-length(table(unlist(myword)))
+mytotalword1<-sum(table(unlist(myword)))
+
+#4. 사전처리 이전과 이후 결과 비교 
+results.comparing <- rbind(
+  c(myuniquechar0,myuniquechar1),
+  c(myuniqueword0,myuniqueword1),
+  c(mytotalchar0,mytotalchar1),
+  c(mytotalword0,mytotalword1))
+colnames(results.comparing)<-c('before','after')
+rownames(results.comparing)<-c('고유문자수','총 문자 수', '고유단어 수','총 단어 수')
+
+results.comparing
