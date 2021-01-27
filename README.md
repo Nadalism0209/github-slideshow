@@ -13,6 +13,5 @@ I'll meet you over there, can't wait to get started!
 This course is using the :sparkles: open source project [reveal.js](https://github.com/hakimel/reveal.js/). In some cases we’ve made changes to the history so it would behave during class, so head to the original project repo to learn more about the cool people behind this project.
 
 
-나는 고려대학교 사회학과 14학번 황상문이다. 
-나는 코밋 메시지를 작성하고 있다. 
-이 코밋 메시지를 작성함으로써 이 readme-edits 브랜치는 main과는 다른 내용을 포함하게 되었다. 
+i like the song, chariot. 
+its lyrics gives me a hope and willingness to overcome all the struggles i encounter. 
